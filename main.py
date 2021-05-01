@@ -13,6 +13,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'pl
 
 db = SQLAlchemy(app)
 
+# Marshmallow set up
+ma = Marshmallow(app)
 
 @app.cli.command('db_create')
 def db_create():
@@ -100,7 +102,9 @@ def url_variable(name: str, age: int):
 @app.route('/planets', methods=['GET'])
 def planets():
     planets_list = Planet.query.all()
-    return jsonify(data=planets_list)
+    result = planets_schema.dump(planets_list)
+
+    return jsonify(result)
 
 
 # database models (could split it into a separate file)
@@ -125,6 +129,22 @@ class Planet(db.Model):
     radius = Column(Float)
     distance = Column(Float)
 
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'first_name', 'last_name', 'email', 'password')
+
+
+class PlanetSchema(ma.Schema):
+    class Meta:
+        fields = ('planet_id', 'planet_name', 'planet_type', 'home_star', 'mass', 'radius', 'distance')
+
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
+planet_schema = PlanetSchema()
+planets_schema = PlanetSchema(many=True)
 
 if __name__ == '__main__':
     app.run()
